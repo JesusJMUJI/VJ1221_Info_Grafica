@@ -313,7 +313,39 @@ function initHandlers() {
   var lastMouseY;
   
   var canvas = document.getElementById("myCanvas");
-  
+
+  canvas.addEventListener("touchstart", function(event) {
+    mouseDown = true;
+    lastMouseX = event.touches[0].clientX;
+    lastMouseY = event.touches[0].clientY;
+  }, false);
+
+  canvas.addEventListener("touchend", function() {
+    mouseDown = false;
+  }, false);
+
+  canvas.addEventListener("touchmove", function(event) {
+    if (event.touches.length > 0) {
+      var touch = event.touches[0];
+      var delta = 0.0;
+      if (event.scale) {
+        delta = event.scale;
+      } else {
+        delta = touch.clientX - lastMouseX;
+      }
+      if (event.shiftKey == 1) { // fovy
+        fovy *= Math.exp(-delta)
+        fovy = Math.max (0.1, Math.min(3.0, fovy));
+      } else {
+        radius *= Math.exp(-delta);
+        radius  = Math.max(Math.min(radius, 30), 0.05);
+      }
+      lastMouseX = touch.clientX;
+      lastMouseY = touch.clientY;
+    }
+    event.preventDefault();
+  }, false);
+
   canvas.addEventListener("mousedown", function(event) {
     mouseDown  = true;
     lastMouseX = event.clientX;
