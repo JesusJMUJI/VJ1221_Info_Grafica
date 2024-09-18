@@ -227,7 +227,7 @@ function initRendering(...renderOptions) {
   
 //  gl.clearColor(0.15,0.25,0.35,1.0);  // establece el color de fondo del canvas en RGBA
   gl.clearColor(1,1,1,1.0);  // establece el color de fondo del canvas en RGBA
-  gl.cullFace  (gl.FRONT);             // elimina las caras traseras, valor por defecto
+  gl.cullFace  (gl.BACK);             // elimina las caras traseras, valor por defecto
   gl.frontFace (gl.CCW);              // el orden de los vértices es en antihorario, valor por defecto 
 
   for (let option of renderOptions) {
