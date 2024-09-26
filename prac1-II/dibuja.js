@@ -3,7 +3,7 @@
 //
 
 // modelo a dibujar
-var modeloSeleccionado = j10VCstrip;
+var modeloSeleccionado = unCuadradoVC;
 
 //
 // Gobierna el ciclo de dibujado de la escena

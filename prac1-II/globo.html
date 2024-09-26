@@ -5,20 +5,21 @@
   
   <meta charset="utf-8">
   
-  <title> Dibuja </title>
+  <title> Transforma </title>
   
   <style type="text/css">
     canvas {border: 1px solid black;}
   </style>
-  
+
   <!-- Shader de vértices -->
-  <script id="myVertexShader" type="x-shader/x-vertex">#version 300 es
+  <script id="myVertexShader" type="x-shader/x-vertex">#version 300 es  
     in      vec3 VertexPosition;
-    uniform mat4 modelMatrix;
+    uniform mat4 modelViewMatrix;
+    uniform mat4 projectionMatrix;
     out     vec3 v;
 
     void main()  {
-      gl_Position =  modelMatrix * vec4(VertexPosition, 1.0);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(VertexPosition, 1.0);
       v = VertexPosition; // para colorear las caras
     }
   </script>
@@ -26,7 +27,7 @@
   <!-- Shader de fragmentos -->
   <script id="myFragmentShader" type="x-shader/x-fragment">#version 300 es
     precision mediump float;
-    
+
     in  vec3 v;
     out vec4 fragmentColor;
 
@@ -51,9 +52,9 @@
   </canvas>
   
   <script src = "gl-matrix-min.js"></script>
-  <script src = "poligonos.js"></script>
-  <script src = "../prac1-II/comun.js"></script>
-  <script src = "dibuja.js"></script>
+  <script src = "primitivasG.js"></script>
+  <script src = "comun.js"></script>
+  <script src = "globo.js"></script>
   
 </body>
 
