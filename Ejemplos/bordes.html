@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  
+    <meta charset="utf-8">
+    
+    <title> Bordes </title>
+    
+    <style>
+      canvas {border: 1px solid black;}
+    </style>
+    
+    <script id="myVertexShaderFBO" 
+          type="x-shader/x-vertex">#version 300 es
+      
+      uniform   mat4 projectionMatrix;
+      uniform   mat4 modelViewMatrix;
+      uniform   mat3 normalMatrix;
+      
+      in vec3 VertexPosition;
+      in vec3 VertexNormal;
+      
+      out vec3 N, ec;
+  
+      void main()  {
+      
+        N               = normalize(normalMatrix * VertexNormal);
+        vec4 ecPosition = modelViewMatrix * vec4(VertexPosition,1.0);
+        ec              = vec3(ecPosition);
+        
+        gl_Position     = projectionMatrix * ecPosition;
+      
+      }
+      
+    </script>
+    
+    <script id="myFragmentShaderFBO" 
+          type="x-shader/x-fragment">#version 300 es
+      
+      precision highp float;
+      
+      struct LightData {
+        vec3 Position;
+        vec3 La;
+        vec3 Ld;
+        vec3 Ls;
+      };
+      uniform LightData Light;
+    
+      struct MaterialData {
+        vec3 Ka;
+        vec3 Kd;
+        vec3 Ks;
+        float alpha;
+      };
+      uniform MaterialData Material;
+
+      uniform float Gamma;
+      in  vec3  N, ec;
+      out vec4 fragmentColor;
+
+      vec3 phong (vec3 N, vec3 L, vec3 V) {
+      
+        vec3  ambient  = Material.Ka * Light.La;
+        vec3  diffuse  = vec3(0.0);
+        vec3  specular = vec3(0.0);
+        
+        float NdotL    = dot (N,L);
+        
+        if (NdotL > 0.0) {
+          vec3  R       = reflect(-L, N);;
+          float RdotV_n = pow(max(0.0, dot(R,V)), Material.alpha);
+          
+          diffuse  = NdotL   * (Light.Ld * Material.Kd);
+          specular = RdotV_n * (Light.Ls * Material.Ks);
+        }
+        
+        return (ambient + diffuse + specular);
+      }
+
+      void main() {
+
+        vec3 n = normalize(N);
+        vec3 L = normalize(Light.Position - ec);
+        vec3 V = normalize(-ec);
+      
+        vec3 myColor = phong(n,L,V);
+
+        fragmentColor = vec4(myColor,1.0);
+      
+      }
+      
+    </script>
+    
+    <script id="myVertexShader" 
+          type="x-shader/x-vertex">#version 300 es
+      
+      in vec3 VertexPosition;
+      in vec2 VertexTexcoords;
+
+      out vec2 texCoords;
+
+      void main()  {
+      
+        gl_Position = vec4(VertexPosition, 1.0);
+        texCoords   = VertexTexcoords;
+
+      }
+      
+    </script>
+    
+    <script id="myFragmentShader" 
+          type="x-shader/x-fragment">#version 300 es
+      
+      precision highp float;
+      
+      uniform sampler2D myTexture;
+      uniform float kernel[9];
+
+      in  vec2 texCoords;
+      out vec4 fragmentColor;
+
+      void main() {
+        
+        if (texCoords.s < 0.5){
+          vec2 onePixel = vec2(1.0, 1.0) / (660.0*0.25);
+          vec4 colorSum =
+            (texture(myTexture, texCoords + onePixel * vec2(-1.0, -1.0)) * kernel[0]) +
+            (texture(myTexture, texCoords + onePixel * vec2( 0.0, -1.0)) * kernel[1]) +
+            (texture(myTexture, texCoords + onePixel * vec2( 1.0, -1.0)) * kernel[2]) +
+            (texture(myTexture, texCoords + onePixel * vec2(-1.0,  0.0)) * kernel[3]) +
+            (texture(myTexture, texCoords + onePixel * vec2( 0.0,  0.0)) * kernel[4]) +
+            (texture(myTexture, texCoords + onePixel * vec2( 1.0,  0.0)) * kernel[5]) +
+            (texture(myTexture, texCoords + onePixel * vec2(-1.0,  1.0)) * kernel[6]) +
+            (texture(myTexture, texCoords + onePixel * vec2( 0.0,  1.0)) * kernel[7]) +
+            (texture(myTexture, texCoords + onePixel * vec2( 1.0,  1.0)) * kernel[8]);
+          
+          float eps = 0.99;
+          
+          fragmentColor = vec4(vec3(1.0-colorSum), 1.0);
+          if ((fragmentColor.r < eps) || (fragmentColor.g < eps) || (fragmentColor.b < eps)) { 
+          
+            float lum = 0.2125*fragmentColor.r + 0.7154*fragmentColor.g + 0.0721*fragmentColor.b;
+            fragmentColor = vec4(vec3(lum),1.0);
+          }
+          
+        } else
+          fragmentColor = texture(myTexture, texCoords);
+
+      }
+      
+    </script>
+    
+  </head>
+    
+  <body>
+  
+    <canvas id="myCanvas" width="600" height="600">
+      El navegador no soporta HTML5
+    </canvas>
+    
+    <script src="gl-matrix-min.js"></script>
+    <script src="materiales.js"></script>
+    <script src="primitivasGNT.js"></script>
+    <script src="comun.js"></script>
+    <script src="bordes.js"></script>
+
+  </body>
+
+</html>

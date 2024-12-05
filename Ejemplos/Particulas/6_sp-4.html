@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title> VJ1221 Informatica Grafica - Sistema de particulas </title>
+      <style>
+        canvas {border: 1px solid black; background black}
+        </style>
+      </head>
+  
+  <body>
+     Texture: <input type="file" name="TextureFilename" accept="image/*">  <br>
+     PointSize: <input type="range" name="PointSize" min="1" max="20" value="1"><br>
+      <canvas id="myCanvas" width="800" height="800">
+        Your browser does not support HTML5
+      </canvas>
+      <script id="myVertexShader" type="x-shader/x-vertex">
+        
+        uniform   mat4 projectionMatrix;
+        uniform   mat4 modelViewMatrix;
+        
+        attribute vec3  VertexVelocity;
+        attribute float VertexStartTime;
+        
+        uniform float Time;
+        uniform float PointSize;
+        varying float alpha;
+        varying vec2  texcoords;
+        
+        void main()  {
+          
+          vec3 pos = vec3(0.0);
+          
+          if (Time > VertexStartTime) {
+            float t = Time - VertexStartTime;
+            t= mod(t,2.0);
+            //if (t < 2.0) {               // si aun vive
+              pos.x = VertexVelocity.x;
+              pos.y = VertexVelocity.y * t;
+              alpha = 1.0 - t/2.0;
+            //}
+          }
+          vec4 ecPosition= modelViewMatrix * vec4(pos,1.0);
+          
+          gl_Position   = projectionMatrix * ecPosition;
+          gl_PointSize  = PointSize;
+          texcoords.st  = pos.xy;
+        }
+      
+      </script>
+      
+      <script id="myFragmentShader" type="x-shader/x-fragment">
+        
+        precision mediump float;
+
+        uniform sampler2D myTexture;
+        
+        varying float alpha;
+        varying vec2  texcoords;
+        
+        void main() {
+        
+          gl_FragColor = vec4(vec3(texture2D(myTexture,texcoords)), alpha);
+          
+        }
+      
+      </script>
+      
+      <script src="gl-matrix-min.js"></script>
+      <script src="6_sp-4.js"></script>
+      
+      </body>
+</html>

@@ -33,30 +33,28 @@ function initKeyboardHandler() {
 // Establece las propiedades de material según establece el modelo de ilumnación de Phong
 //
 function setMaterial (M) {
-
+  
   setUniform ("Material.Ka",        M.ambient);
   setUniform ("Material.Kd",        M.diffuse);
   setUniform ("Material.Ks",        M.specular);
   setUniform ("Material.shininess", M.shininess);
-
+  
 }
 //
 // Establece las propiedades de la fuente de luz según establece el modelo de ilumnación de Phong
 //
-function initLight () {
+function initLight (mvCono) {
+  var LpInicial = vec3.fromValues (0.0, 0.0, 0.25);
+  var LpFinal = vec3.transformMat4 (vec3.create(), LpInicial, mvCono);
+
+
   setUniform("Light.La", [1.0, 1.0, 1.0]);
   setUniform("Light.Ld", [1.0, 1.0, 1.0]);
   setUniform("Light.Ls", [1.0, 1.0, 1.0]);
-  setUniform("Light.Lp", [0.0, 0.0, 0.0]); // en coordenadas del ojo
+  // setUniform("Light.Lp", [0.0, 0.0, 0.0]); // en coordenadas del ojo
+  setUniform("Light.Lp", LpFinal);
 
 }
-
-function drawLight() {
-    var LpInicial = vec3.fromValues(0.0, 0.0, 0.25);
-    var LpFinal = vec3.transformMat4(vec3.create(), LpInicial, mvCono);
-    setUniform("Light.Lp", LpFinal);
-}
-
 
 //
 // Dibujado de la escena
@@ -160,28 +158,30 @@ function drawScene() {
     setUniform("normalMatrix", getNormalMatrix(modelViewMatrix));
     setMaterial(White_rubber);
   draw(esfera);
+
+  initLight(mvCono);
+  
 }
 
-
 if (initWebGL()) {
-
+  
   initShaders("myVertexShader","myFragmentShader");
-
+  
   initAttributesRefs("VertexPosition",
                      "VertexNormal");                            // NUEVO
-
+  
   initUniformRefs("modelViewMatrix","projectionMatrix",
   "normalMatrix",                                                // NUEVO
   "Material.Ka","Material.Kd","Material.Ks","Material.shininess",// NUEVO
   "Light.La","Light.Ld","Light.Ls","Light.Lp");                  // NUEVO
-
+  
   initPrimitives(plano,cubo,tapa,cono,cilindro,esfera);
-
+  
   initRendering("DEPTH_TEST");
   initHandlers();
-  initLight();                                                   // NUEVO
+  // initLight();                                                   // NUEVO
 
   requestAnimationFrame(drawScene);
   initKeyboardHandler();
-
+  
 }

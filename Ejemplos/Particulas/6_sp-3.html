@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title> VJ1221 Informatica Grafica - Sistema de particulas </title>
+      <style>
+        canvas {border: 1px solid black; background black}
+        </style>
+      </head>
+  
+  <body>
+      <canvas id="myCanvas" width="800" height="800">
+        Your browser does not support HTML5
+      </canvas>
+      <script id="myVertexShader" type="x-shader/x-vertex">
+        
+        uniform   mat4 projectionMatrix;
+        uniform   mat4 modelViewMatrix;
+        
+        attribute vec3  VertexVelocity;
+        attribute float VertexStartTime;
+        
+        uniform float Time;
+        varying float alpha;
+        varying vec3  color;
+        
+        void main()  {
+          
+          vec3 pos = vec3(0.0);
+          
+          if (Time > VertexStartTime) {
+            float t = Time - VertexStartTime;
+            if (t < 2.0) {               // si aun vive
+              pos.x = VertexVelocity.x;
+              pos.y = VertexVelocity.y * t;
+              alpha = 1.0 - t/2.0;
+            }
+          }
+          vec4 ecPosition= modelViewMatrix * vec4(pos,1.0);
+          color.r = pos.x;
+          color.g = pos.y;
+          color.z = pos.y;
+          
+          gl_Position = projectionMatrix * ecPosition;
+          gl_PointSize  = 6.0;
+        }
+      
+      </script>
+      
+      <script id="myFragmentShader" type="x-shader/x-fragment">
+        
+        precision mediump float;
+        
+        varying float alpha;
+        varying vec3  color;
+        
+        void main() {
+        
+          gl_FragColor = vec4(color, alpha);
+          
+        }
+      
+      </script>
+      
+      <script src="gl-matrix-min.js"></script>
+      <script src="6_sp-3.js"></script>
+      
+      </body>
+</html>
