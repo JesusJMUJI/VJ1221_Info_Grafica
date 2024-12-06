@@ -28,10 +28,10 @@ function initLight () {
 	// var LpFinal = vec3.transformMat4 (vec3.create(), LpInicial, mvCono);
 
 
-	setUniform("Light.La", [1.0, 1.0, 1.0]);
-	setUniform("Light.Ld", [1.0, 1.0, 1.0]);
-	setUniform("Light.Ls", [1.0, 1.0, 1.0]);
-	setUniform("Light.Lp", [0.0, 0.0, 0.0]); // en coordenadas del ojo
+  setUniform("Light.La", [1.0, 1.0, 1.0]); // Increased ambient light intensity
+  setUniform("Light.Ld", [1.0, 1.0, 1.0]); // Increased diffuse light intensity
+  setUniform("Light.Ls", [1.0, 1.0, 1.0]); // Increased specular light intensity
+  setUniform("Light.Lp", [0.0, 0.0, 0.0]); // Light position in eye coordinates
 	// setUniform("Light.Lp", LpFinal);
 
 }
@@ -42,6 +42,9 @@ function drawZootropo () {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   setUniform ("projectionMatrix", getPerspectiveProjectionMatrix());
   var cameraMatrix = getCameraMatrix();
+
+
+
   var matT_IT_TOP = mat4.create();
   var matRY_IT_BOT = mat4.create();
   var matT_Detach = mat4.create();
@@ -72,7 +75,11 @@ function drawZootropo () {
   mat4.fromYRotation(matRY_Handle, 1.57);
   mat4.fromXRotation(matRZ_Handle, 0);
 
+  drawModel(concat(cameraMatrix,matS),tapaItalianaArriba,Bronze,texturaSeleccionada);
+
+
   for (var i = 0; i < nElementos; i++) {
+
     var amplitud = 0.1;
     var oscillation = Math.sin(anguloTotal + i * Math.PI / nElementos) * amplitud;
     mat4.fromTranslation(matT_IT_TAPA,[0,0.38 + oscillation,0]);
@@ -83,45 +90,28 @@ function drawZootropo () {
     mat4.fromYRotation(matRY_IT_BOT, anguloTotal);
 
 
-    setMaterial(Perl);
-    setUniform("myTexture", 0); // NUEVO
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, texturesId[texturaSeleccionada]);
-    drawModel(concat(cameraMatrix, matYR2, matYR, matT, matYR, matS), italianaAbajo);
+    drawModel(concat(cameraMatrix, matYR2, matYR, matT, matYR, matS), italianaAbajo,Perl,texturaSeleccionada);
+
+    drawModel(concat(cameraMatrix, matRY_IT_BOT, matYR, matT_IT_TOP, matT, matYR, matS),italianaArriba,Esmerald,texturaSeleccionada);
 
 
-    setMaterial(Esmerald);
-    setUniform("myTexture", 1); // NUEVO
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, texturesId[texturaSeleccionada]);
-    drawModel(concat(cameraMatrix, matRY_IT_BOT, matYR, matT_IT_TOP, matT, matYR, matS),italianaArriba);
+    drawModel(concat(cameraMatrix, matYR2, matYR, matT, matYR, matT_IT_TAPA, matT_XR_TAPA, matS),italianaTapa,Polished_silver,texturaSeleccionada);
 
 
-    setMaterial(Polished_silver);
-    setUniform("myTexture", 0); // NUEVO
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, texturesId[texturaSeleccionada]);
-    drawModel(concat(cameraMatrix, matYR2, matYR, matT, matYR, matT_IT_TAPA, matT_XR_TAPA, matS),italianaTapa);
+    drawModel(concat(cameraMatrix, matYR2, matYR, matT_IT_ESFERA, matT, matYR, matS_ESFERA),esfera,Gold,texturaSeleccionada);
 
-
-    setMaterial(Jade);
-    setUniform("myTexture", 1); // NUEVO
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, texturesId[texturaSeleccionada]);
-    drawModel(concat(cameraMatrix, matYR2, matYR, matT_IT_ESFERA, matT, matYR, matS_ESFERA),esfera);
-
-    setMaterial(Ruby);
-    setUniform("myTexture", 0); // NUEVO
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, texturesId[texturaSeleccionada]);
-    drawModel(concat(cameraMatrix, matYR2, matYR,matT,matYR,matT_Handle,matRZ_Handle,matRY_Handle, matS_Handle,matS),cubo);
+    drawModel(concat(cameraMatrix, matYR2, matYR,matT,matYR,matT_Handle,matRZ_Handle,matRY_Handle, matS_Handle,matS),cubo,Gold,texturaSeleccionada);
   }
 }
 
-function drawModel(mat,model)
+function drawModel(matrix,model,material,texture)
 {
-  setUniform("modelViewMatrix", concat(mat));
-  setUniform("normalMatrix", getNormalMatrix(mat));
+  setUniform("modelViewMatrix", concat(matrix));
+  setUniform("normalMatrix", getNormalMatrix(matrix));
+  setMaterial(material)
+  setUniform("myTexture", 3); // NUEVO
+  gl.activeTexture(gl.TEXTURE3);
+  gl.bindTexture(gl.TEXTURE_2D, texturesId[texture]);
   draw(model);
 
 }
@@ -182,12 +172,12 @@ if (initWebGL()) {
   initShaders("myVertexShader","myFragmentShader");
   initAttributesRefs("VertexPosition", "VertexNormal", "VertexTexcoords"); // NUEVO
   initUniformRefs("modelViewMatrix","projectionMatrix", "normalMatrix", "Material.Ka","Material.Kd","Material.Ks","Material.shininess", "Light.La","Light.Ld","Light.Ls","Light.Lp", "myTexture"); // NUEVO
-  initPrimitives(plano,cubo,tapa,cono,cilindro,esfera,italianaAbajo,italianaArriba,italianaTapa);
-  initRendering("DEPTH_TEST","CULL_FACE");
-  gl.clearColor(0.15,0.25,0.35,1.0);
+  initPrimitives(plano,cubo,tapa,cono,cilindro,esfera,italianaAbajo,italianaArriba,italianaTapa,tapaItalianaArriba,tapaItalianaAbajo);
+  initRendering("DEPTH_TEST");
+  // gl.clearColor(0.15,0.25,0.35,1.0);
   initHandlers();
   initLight();
-  initTextures("dots.png","bee.png"); // NUEVO
+  initTextures("bee.png", "damas.png","dots.png","emoji.png","figure.png");
   requestAnimationFrame(drawScene);
   initKeyboardHandler();
   setInterval (giraZootropo, 40);

@@ -81,11 +81,12 @@
       vec3 n = normalize(N);
       vec3 L = normalize(Light.Lp - ec);
       vec3 V = normalize(-ec);
+
       vec4 colorFromTexture  = texture(myTexture, texCoords);
 
-      vec3 colorFromLighting = phong(n,L,V,vec3(1.0,1.0,1.0));
+      vec3 colorFromLighting = phong(n,L,V,colorFromTexture.rgb);
 
-      fragmentColor = vec4(colorFromLighting, 1.0);
+      fragmentColor = colorFromTexture;
     }
   </script>
 </head>
