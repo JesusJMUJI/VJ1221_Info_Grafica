@@ -144,7 +144,8 @@ function setUniform (name, value) {
     case 16: gl.uniformMatrix4fv(ref, false, value); break;
     case  9: gl.uniformMatrix3fv(ref, false, value); break;
     case  4: gl.uniform4fv(ref, value); break;
-    case  3: gl.uniform3fv(ref, value); break;
+    case 3: gl.uniform3fv(ref, value); break;
+    case  2: gl.uniform2fv(ref, value); break;
     case  1: gl.uniform1f(ref, value[0]); break;
     case  undefined: gl.uniform1i(ref, value); break;
   }
@@ -182,9 +183,13 @@ function draw (model) {
 //
 // Obtiene la matriz de transformación de la proyección perspectiva
 //
-function getPerspectiveProjectionMatrix () { return mat4.perspective(mat4.create(), fovy, 1.0, 0.1, 100.0); }
+function getOrthoProjectionMatrix() {
+  return mat4.ortho(mat4.create(), -1, 1, -1, 1, 0.1, 100.0);
+}
 
-function getOrthoProjectionMatrix () { return mat4.ortho(mat4.create(), -1, 1, -1, 1, 0.1, 100.0); }
+function getPerspectiveProjectionMatrix() {
+  return mat4.perspective(mat4.create(), fovy, 1.0, 0.1, 100.0);
+}
 //
 // Obtiene y establece la matriz de transformación de la cámara en el shader de vértices
 //

@@ -11,104 +11,118 @@
     canvas {border: 1px solid black;}
   </style>
 
-<!-- Shader de vértices -->
+  <!-- Shader de vértices -->
   <script id="myVertexShader" type="x-shader/x-vertex">#version 300 es
-    in        vec3 VertexPosition;
-    in        vec3 VertexNormal;
-    in        vec2 VertexTexcoords;
-    out       vec3 N, ec;
-    out       vec2 texCoords;
-    uniform   mat4 projectionMatrix;
-    uniform   mat4 modelViewMatrix;
-    uniform   mat3 normalMatrix;
+  in        vec3 VertexPosition;
+  in        vec3 VertexNormal;
+  in        vec2 VertexTexcoords;
+  out       vec3 N, ec;
+  out       vec2 texCoords;
+  uniform   mat4 projectionMatrix;
+  uniform   mat4 modelViewMatrix;
+  uniform   mat3 normalMatrix;
 
-    void main()  {
-      N               = normalize(normalMatrix * VertexNormal);
-      vec4 ecPosition = modelViewMatrix * vec4(VertexPosition,1.0);
-      ec              = vec3(ecPosition);
-      gl_Position     = projectionMatrix * ecPosition;
-      texCoords       = VertexTexcoords;
-    }
+  void main()  {
+    N               = normalize(normalMatrix * VertexNormal);
+    vec4 ecPosition = modelViewMatrix * vec4(VertexPosition,1.0);
+    ec              = vec3(ecPosition);
+    gl_Position     = projectionMatrix * ecPosition;
+    texCoords       = VertexTexcoords;
+  }
   </script>
 
   <!-- Shader de fragmentos -->
   <script id="myFragmentShader" type="x-shader/x-fragment">#version 300 es
-    precision mediump float;
+  precision mediump float;
 
-    in  vec3 N, ec;
-    in  vec2 texCoords;
-    out vec4 fragmentColor;
+  in  vec3 N, ec;
+  in  vec2 texCoords;
+  out vec4 fragmentColor;
 
-    struct LightData {
-      vec3 La;         // Ambiente
-      vec3 Ld;         // Difusa
-      vec3 Ls;         // Especular
-      vec3 Lp;         // Posición en coordenadas del ojo
-    };
-    uniform LightData Light;
+  struct LightData {
+    vec3 La;         // Ambiente
+    vec3 Ld;         // Difusa
+    vec3 Ls;         // Especular
+    vec3 Lp;         // Posición en coordenadas del ojo
+  };
+  uniform LightData Light;
 
-    struct MaterialData {
-      vec3 Ka;         // Ambiente
-      vec3 Kd;         // Difusa
-      vec3 Ks;         // Especular
-      float shininess; // Exponente para el Brillo
-    };
-    uniform MaterialData Material;
+  struct MaterialData {
+    vec3 Ka;         // Ambiente
+    vec3 Kd;         // Difusa
+    vec3 Ks;         // Especular
+    float shininess; // Exponente para el Brillo
+  };
+  uniform MaterialData Material;
 
-    uniform sampler2D myTexture;
+  uniform sampler2D myTexture;
+  uniform vec2 Scale;     // numero de agujeros
+  uniform vec2 Threshold; // para el tamaño de los agujeros
 
-    vec3 phong (vec3 N, vec3 L, vec3 V, vec3 color) {
+  vec3 phong (vec3 N, vec3 L, vec3 V, vec3 color) {
+    vec3  ambient  = Material.Ka * Light.La;
+    vec3  diffuse  = vec3(0.0);
+    vec3  specular = vec3(0.0);
 
-      vec3  ambient  = Material.Ka * Light.La;
-      vec3  diffuse  = vec3(0.0);
-      vec3  specular = vec3(0.0);
+    float NdotL    = dot (N,L);
 
-      float NdotL    = dot (N,L);
+    if (NdotL > 0.0) {
+      vec3  R          = reflect(-L, N);;
+      float RdotV_n    = pow(max(0.0, dot(R,V)), Material.shininess);
 
-      if (NdotL > 0.0) {
+      diffuse  = NdotL   * (Light.Ld * Material.Kd) * color;
+      specular = RdotV_n * (Light.Ls * Material.Ks);
+    }
+    return (ambient + diffuse + specular);
+  }
 
-        vec3  R          = reflect(-L, N);;
-        float RdotV_n    = pow(max(0.0, dot(R,V)), Material.shininess);
+  void main() {
+    vec3 n = normalize(N);
+    vec3 L = normalize(Light.Lp - ec);
+    vec3 V = normalize(-ec);
 
-        diffuse  = NdotL   * (Light.Ld * Material.Kd) * color;
-        specular = RdotV_n * (Light.Ls * Material.Ks);
+    vec4 colorFromTexture  = texture(myTexture, texCoords);
+    vec3 colorFromLighting = phong(n,L,V,colorFromTexture.rgb);
 
-      }
-      return (ambient + diffuse + specular);
+    float ss = fract(texCoords.s * Scale.s);
+    float tt = fract(texCoords.t * Scale.t);
+
+    if ((ss >= Threshold.s) && (tt >= Threshold.t))
+    {
+      discard;
     }
 
-    void main() {
-      vec3 n = normalize(N);
-      vec3 L = normalize(Light.Lp - ec);
-      vec3 V = normalize(-ec);
-
-      vec4 colorFromTexture  = texture(myTexture, texCoords);
-
-      vec3 colorFromLighting = phong(n,L,V,colorFromTexture.rgb);
-
-      fragmentColor = colorFromTexture;
-    }
+    fragmentColor = vec4(colorFromLighting, 1.0);
+  }
   </script>
 </head>
 
 <body>
+<strong>Ángulo incrementado: </strong><label id="angulo">0</label><label>&nbsp;grados (teclas 'w' y 's' para incrementar o decrementar, respectivamente)</label>
+<br>
+<!--<strong>Proyección: </strong><label id="proyeccion">Perspectiva</label><label>&nbsp;(tecla 'p' para cambiar a perspectiva y 'o' a ortografica)</label>-->
+<!--<br>-->
 
-  <strong>Ángulo incrementado: </strong><label id="angulo">0</label><label>&nbsp;grados (teclas 'w' y 's' para incrementar o decrementar, respectivamente)</label>
-    <br>
-  <strong>Proyección: </strong><label id="proyeccion">Perspectiva</label><label>&nbsp;(tecla 'p' para cambiar a perspectiva y 'o' a ortografica)</label>
-  <br>
-
-  <canvas id="myCanvas" width="800" height="800">
-    El Navegador no soporta HTML5
-  </canvas>
-
-  <script src = "gl-matrix-min.js"></script>
-  <script src = "materiales.js"></script>
-  <script src = "primitivasGNT_Italiana.js"></script>
-  <script src = "comun.js"></script>
-  <script src = "zootropo.js"></script>
-<!--  <script src = "iluminacion.js"></script>-->
-
+<!-- EL cambio de perspectiva esta roto y no lo he conseguido arreglar-->
+<br>
+<strong>Textura Procedural de Enrejado</strong> <br>
+<input type="range" id="ScaleS" name="range" min="1" max="30" value="1" oninput="updateLabel('ScaleS', this.value)"> &nbsp;Scale S: <span id="ScaleSValue">1</span><br>
+<input type="range" id="ScaleT" name="range" min="1" max="30" value="1" oninput="updateLabel('ScaleT', this.value)"> &nbsp;Scale T: <span id="ScaleTValue">1</span><br>
+<input type="range" id="ThresholdS" name="range" min="0" max="100" value="100" oninput="updateLabel('ThresholdS', this.value)"> &nbsp;Threshold S: <span id="ThresholdSValue">100</span><br>
+<input type="range" id="ThresholdT" name="range" min="0" max="100" value="100" oninput="updateLabel('ThresholdT', this.value)"> &nbsp;Threshold T: <span id="ThresholdTValue">100</span><br>
+<canvas id="myCanvas" width="800" height="800">
+  El Navegador no soporta HTML5
+</canvas>
+<script src = "gl-matrix-min.js"></script>
+<script src = "materiales.js"></script>
+<script src = "primitivasGNT_Italiana.js"></script>
+<script src = "comun.js"></script>
+<script src = "zootropo.js"></script>
+<script>
+  function updateLabel(id, value) {
+    document.getElementById(id + 'Value').innerText = value;
+  }
+</script>
 </body>
 
 </html>
